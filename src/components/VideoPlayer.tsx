@@ -111,7 +111,7 @@ const VideoPlayer = () => {
         ref={videoRef}
         className="w-full h-full object-cover"
         onTimeUpdate={updateProgress}
-        src="/your-video-source.mp4"
+        src="https://huggingface.co/Aman6u5/fgfdggrtettrtetfdgdfg/resolve/main/anime/One_Punch_Man_Season_1/Episode_1/720p.mp4?download=true"
         poster="/your-video-poster.jpg"
       >
         Your browser does not support the video tag.
