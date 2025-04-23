@@ -15,6 +15,7 @@ const VideoPlayer = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(1);
   const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,10 +32,26 @@ const VideoPlayer = () => {
     }
   };
 
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newVolume = parseFloat(e.target.value);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+      setVolume(newVolume);
+      setIsMuted(newVolume === 0);
+    }
+  };
+
   const handleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
+      if (!isMuted) {
+        videoRef.current.volume = 0;
+        setVolume(0);
+      } else {
+        videoRef.current.volume = 1;
+        setVolume(1);
+      }
     }
   };
 
@@ -69,7 +86,9 @@ const VideoPlayer = () => {
       clearTimeout(controlsTimeoutRef.current);
     }
     controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
+      if (!isMuted) {
+        setShowControls(false);
+      }
     }, 3000);
   };
 
@@ -84,30 +103,50 @@ const VideoPlayer = () => {
   return (
     <div 
       ref={containerRef}
-      className="relative w-full aspect-video bg-anime-dark"
+      className="relative w-full aspect-video rounded-lg overflow-hidden bg-anime-dark group"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
       <video
         ref={videoRef}
-        className="w-full h-full"
+        className="w-full h-full object-cover"
         onTimeUpdate={updateProgress}
         src="/your-video-source.mp4"
+        poster="/your-video-poster.jpg"
       >
         Your browser does not support the video tag.
       </video>
 
+      {/* Overlay for play/pause on video click */}
+      <div 
+        className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 cursor-pointer"
+        onClick={handlePlayPause}
+      />
+
+      {/* Play/Pause overlay icon */}
       <div className={cn(
-        "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 transition-opacity duration-300",
-        showControls ? "opacity-100" : "opacity-0"
+        "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300",
+        isPlaying ? "opacity-0" : "opacity-100"
       )}>
-        <div className="flex flex-col gap-2">
+        <Play className="w-16 h-16 text-white/80" />
+      </div>
+
+      {/* Controls overlay */}
+      <div className={cn(
+        "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 transition-all duration-300 transform",
+        showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      )}>
+        <div className="flex flex-col gap-3">
           {/* Progress bar */}
           <input
             type="range"
             value={progress}
             onChange={handleProgress}
-            className="w-full h-1 bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer 
+                     [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 
+                     [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full 
+                     [&::-webkit-slider-thumb]:bg-primary hover:[&::-webkit-slider-thumb]:bg-primary-hover
+                     [&::-webkit-slider-thumb]:transition-colors"
           />
 
           {/* Controls */}
@@ -115,7 +154,7 @@ const VideoPlayer = () => {
             <div className="flex items-center gap-4">
               <button
                 onClick={handlePlayPause}
-                className="text-white hover:text-primary transition-colors"
+                className="text-white/80 hover:text-primary transition-colors"
               >
                 {isPlaying ? (
                   <Pause className="w-6 h-6" />
@@ -124,21 +163,35 @@ const VideoPlayer = () => {
                 )}
               </button>
 
-              <button
-                onClick={handleMute}
-                className="text-white hover:text-primary transition-colors"
-              >
-                {isMuted ? (
-                  <VolumeX className="w-6 h-6" />
-                ) : (
-                  <Volume2 className="w-6 h-6" />
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMute}
+                  className="text-white/80 hover:text-primary transition-colors"
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-6 h-6" />
+                  ) : (
+                    <Volume2 className="w-6 h-6" />
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer
+                           [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5
+                           [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full
+                           [&::-webkit-slider-thumb]:bg-white/80"
+                />
+              </div>
             </div>
 
             <button
               onClick={handleFullscreen}
-              className="text-white hover:text-primary transition-colors"
+              className="text-white/80 hover:text-primary transition-colors"
             >
               {isFullscreen ? (
                 <Minimize2 className="w-6 h-6" />
